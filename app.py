@@ -1,7 +1,6 @@
 import asyncio
 import websockets
 import requests,json
-import threading
 from config import config
 
 mainCookie=config['mainCookie']
@@ -28,7 +27,7 @@ auth_msg=f'42["identify","uid":{json.dumps(data["user"]["id"])},"model":{json.du
 
 async def main():
     Flag=True
-    uri = "wss://trade.csgoempire.com/socket.io/?EIO=3&transport=websocket"
+    uri = "wss://roulette.csgoempire.com/s/?EIO=3&transport=websocket"
     async with websockets.connect(uri,extra_headers={'user-agent': useragent}) as socket:
         while(Flag):
             rec_msg=await socket.recv()

@@ -1,27 +1,36 @@
-import asyncio
+import asyncio,time
 import websockets
 import json,requests
+from threading import Thread
 from config import config
 import webhook
 
 potential_items=[]
+min_custom_price=int(input("Enter minimum custom price: "))
+min_price=int(input("Enter minimum price: "))
+max_price=int(input("Enter maximum price: "))
 
-async def check_items(item_dict):
+def check_items(item_dict):
     print(potential_items)
-    await asyncio.sleep(120)
+    time.sleep(150)
     if item_dict['assetid'] in potential_items:
-        message=f'found {item_dict["market_name"]} at {item_dict["custom_price"]}% with wear {item_dict["wear"]} at only {item_dict["market_value"]/100} coins'
-        webhook.webhook(message)
-        
+        try:
+            message=f'found {item_dict["market_name"]} at {item_dict["custom_price"]}% with wear {item_dict["wear"]} at only {item_dict["market_value"]/100} coins'
+            webhook.webhook(message)
+        except KeyError:
+            message=f'found {item_dict["market_name"]} at 0% with wear {item_dict["wear"]} at only {item_dict["market_value"]/100} coins'
+            webhook.webhook(message)
 
 def low_custom_price(item_dict):
     try:
-        if item_dict['custom_price']<=5:
+        if (item_dict['custom_price']<=min_custom_price and ((item_dict['market_value']/100) in range(min_price,max_price))):
             potential_items.append(item_dict['assetid'])
-            asyncio.get_event_loop().run_until_complete(check_items(item_dict))
+            t = Thread(target=check_items, args=(item_dict,))
+            t.start()
     except KeyError:
         potential_items.append(item_dict['assetid'])
-        asyncio.get_event_loop().run_until_complete(check_items(item_dict))
+        t = Thread(target=check_items, args=(item_dict,))
+        t.start()
 
 async def main():
     uri = "wss://trade.csgoempire.com/socket.io/?EIO=3&transport=websocket"
